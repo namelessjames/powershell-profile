@@ -1,5 +1,5 @@
 # Initial GitHub.com connectivity check with 1 second timeout
-$canConnectToGitHub = Test-Connection github.com -Count 1 -Quiet -TimeoutSeconds 1
+$canConnectToGitHub = Test-Connection github.com -Count 3 -Quiet
 
 # Import Modules and External Profiles
 # Ensure Terminal-Icons module is installed before importing
