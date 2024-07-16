@@ -43,29 +43,14 @@ function Update-PowerShell {
     }
 
     try {
-        Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan
-        $updateNeeded = $false
-        $currentVersion = $PSVersionTable.PSVersion.ToString()
-        $gitHubApiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
-        $latestReleaseInfo = Invoke-RestMethod -Uri $gitHubApiUrl
-        $latestVersion = $latestReleaseInfo.tag_name.Trim('v')
-        if ($currentVersion -lt $latestVersion) {
-            $updateNeeded = $true
-        }
-
-        if ($updateNeeded) {
-            Write-Host "Updating PowerShell..." -ForegroundColor Yellow
-            winget upgrade "Microsoft.PowerShell" --accept-source-agreements --accept-package-agreements
-            Write-Host "PowerShell has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
-        } else {
-            Write-Host "Your PowerShell is up to date." -ForegroundColor Green
-        }
+        Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan        
+        Write-Host "Updating PowerShell..." -ForegroundColor Yellow
+        winget upgrade "Microsoft.PowerShell" --accept-source-agreements --accept-package-agreements
+        Write-Host "PowerShell has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
     } catch {
         Write-Error "Failed to update PowerShell. Error: $_"
     }
 }
-Update-PowerShell
-
 
 # Admin Check and Prompt Customization
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -227,23 +212,23 @@ function la { Get-ChildItem -Path . -Force | Format-Table -AutoSize }
 function ll { Get-ChildItem -Path . -Force -Hidden | Format-Table -AutoSize }
 
 # Git Shortcuts
-function gs { git status }
+function gits { git status }
 
-function ga { git add . }
+function gita { git add . }
 
-function gc { param($m) git commit -m "$m" }
+function gitc { param($m) git commit -m "$m" }
 
-function gp { git push }
+function gitp { git push }
 
-function g { z Github }
+function g { zoxide query Github }
 
-function gcl { git clone "$args" }
+function gitcl { git clone "$args" }
 
-function gcom {
+function gitcom {
     git add .
     git commit -m "$args"
 }
-function lazyg {
+function lazygit {
     git add .
     git commit -m "$args"
     git push
@@ -358,19 +343,19 @@ la - Lists all files in the current directory with detailed formatting.
 
 ll - Lists all files, including hidden, in the current directory with detailed formatting.
 
-gs - Shortcut for 'git status'.
+gits - Shortcut for 'git status'.
 
-ga - Shortcut for 'git add .'.
+gita - Shortcut for 'git add .'.
 
-gc <message> - Shortcut for 'git commit -m'.
+gitc <message> - Shortcut for 'git commit -m'.
 
-gp - Shortcut for 'git push'.
+gitp - Shortcut for 'git push'.
 
 g - Changes to the GitHub directory.
 
-gcom <message> - Adds all changes and commits with the specified message.
+gitcom <message> - Adds all changes and commits with the specified message.
 
-lazyg <message> - Adds all changes, commits with the specified message, and pushes to the remote repository.
+lazygit <message> - Adds all changes, commits with the specified message, and pushes to the remote repository.
 
 sysinfo - Displays detailed system information.
 
