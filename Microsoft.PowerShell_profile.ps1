@@ -1,56 +1,9 @@
-# Initial GitHub.com connectivity check with 1 second timeout
-$canConnectToGitHub = Test-Connection github.com -Count 1 -Quiet
-
 # Import Modules and External Profiles
 # Ensure Terminal-Icons module is installed before importing
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
     Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
 }
 Import-Module -Name Terminal-Icons
-$ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-if (Test-Path($ChocolateyProfile)) {
-    Import-Module "$ChocolateyProfile"
-}
-
-# Check for Profile Updates
-function Update-Profile {
-    if (-not $global:canConnectToGitHub) {
-        Write-Host "Skipping profile update check due to GitHub.com not responding within 1 second." -ForegroundColor Yellow
-        return
-    }
-
-    try {
-        $url = "https://raw.githubusercontent.com/namelessjames/powershell-profile/main/Microsoft.PowerShell_profile.ps1"
-        $oldhash = Get-FileHash $PROFILE
-        Invoke-RestMethod $url -OutFile "$env:temp/Microsoft.PowerShell_profile.ps1"
-        $newhash = Get-FileHash "$env:temp/Microsoft.PowerShell_profile.ps1"
-        if ($newhash.Hash -ne $oldhash.Hash) {
-            Copy-Item -Path "$env:temp/Microsoft.PowerShell_profile.ps1" -Destination $PROFILE -Force
-            Write-Host "Profile has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
-        }
-    } catch {
-        Write-Error "Unable to check for `$profile updates"
-    } finally {
-        Remove-Item "$env:temp/Microsoft.PowerShell_profile.ps1" -ErrorAction SilentlyContinue
-    }
-}
-Update-Profile
-
-function Update-PowerShell {
-    if (-not $global:canConnectToGitHub) {
-        Write-Host "Skipping PowerShell update check due to GitHub.com not responding within 1 second." -ForegroundColor Yellow
-        return
-    }
-
-    try {
-        Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan        
-        Write-Host "Updating PowerShell..." -ForegroundColor Yellow
-        winget upgrade "Microsoft.PowerShell" --accept-source-agreements --accept-package-agreements
-        Write-Host "PowerShell has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
-    } catch {
-        Write-Error "Failed to update PowerShell. Error: $_"
-    }
-}
 
 # Admin Check and Prompt Customization
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -60,36 +13,12 @@ function prompt {
 $adminSuffix = if ($isAdmin) { " [ADMIN]" } else { "" }
 $Host.UI.RawUI.WindowTitle = "PowerShell {0}$adminSuffix" -f $PSVersionTable.PSVersion.ToString()
 
-# Utility Functions
-function Test-CommandExists {
-    param($command)
-    $exists = $null -ne (Get-Command $command -ErrorAction SilentlyContinue)
-    return $exists
-}
-
-# Editor Configuration
-$EDITOR = if (Test-CommandExists nvim) { 'nvim' }
-          elseif (Test-CommandExists pvim) { 'pvim' }
-          elseif (Test-CommandExists vim) { 'vim' }
-          elseif (Test-CommandExists vi) { 'vi' }
-          elseif (Test-CommandExists code) { 'code' }
-          elseif (Test-CommandExists notepad++) { 'notepad++' }
-          elseif (Test-CommandExists sublime_text) { 'sublime_text' }
-          else { 'notepad' }
-Set-Alias -Name vim -Value $EDITOR
-
-function Edit-Profile {
-    vim $PROFILE.CurrentUserAllHosts
-}
 function touch($file) { "" | Out-File $file -Encoding ASCII }
 function ff($name) {
     Get-ChildItem -recurse -filter "*${name}*" -ErrorAction SilentlyContinue | ForEach-Object {
         Write-Output "$($_.FullName)"
     }
 }
-
-# Network Utilities
-function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
 
 # System Utilities
 function admin {
@@ -121,31 +50,7 @@ function unzip ($file) {
     $fullFile = Get-ChildItem -Path $pwd -Filter $file | ForEach-Object { $_.FullName }
     Expand-Archive -Path $fullFile -DestinationPath $pwd
 }
-function hb {
-    if ($args.Length -eq 0) {
-        Write-Error "No file path specified."
-        return
-    }
-    
-    $FilePath = $args[0]
-    
-    if (Test-Path $FilePath) {
-        $Content = Get-Content $FilePath -Raw
-    } else {
-        Write-Error "File path does not exist."
-        return
-    }
-    
-    $uri = "http://bin.christitus.com/documents"
-    try {
-        $response = Invoke-RestMethod -Uri $uri -Method Post -Body $Content -ErrorAction Stop
-        $hasteKey = $response.key
-        $url = "http://bin.christitus.com/$hasteKey"
-        Write-Output $url
-    } catch {
-        Write-Error "Failed to upload the document. Error: $_"
-    }
-}
+
 function grep($regex, $dir) {
     if ( $dir ) {
         Get-ChildItem $dir | select-string $regex
@@ -155,7 +60,7 @@ function grep($regex, $dir) {
 }
 
 function df {
-    get-volume
+    Get-Volume
 }
 
 function sed($file, $find, $replace) {
@@ -167,7 +72,7 @@ function which($name) {
 }
 
 function export($name, $value) {
-    set-item -force -path "env:$name" -value $value;
+    Set-Item -force -path "env:$name" -value $value;
 }
 
 function pkill($name) {
@@ -212,9 +117,9 @@ function la { Get-ChildItem -Path . -Force | Format-Table -AutoSize }
 function ll { Get-ChildItem -Path . -Force -Hidden | Format-Table -AutoSize }
 
 # Git Shortcuts
-function gits { git status }
+function gs { git status }
 
-function gita { git add . }
+function gadd { git add . }
 
 function gitc { param($m) git commit -m "$m" }
 
@@ -283,89 +188,7 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     }
 }
 
-# Help Function
-function Show-Help {
-    @"
-PowerShell Profile Help
-=======================
+#f45873b3-b655-43a6-b217-97c00aa0db58 PowerToys CommandNotFound module
 
-Update-Profile - Checks for profile updates from a remote repository and updates if necessary.
-
-Update-PowerShell - Checks for the latest PowerShell release and updates if a new version is available.
-
-Edit-Profile - Opens the current user's profile for editing using the configured editor.
-
-touch <file> - Creates a new empty file.
-
-ff <name> - Finds files recursively with the specified name.
-
-Get-PubIP - Retrieves the public IP address of the machine.
-
-uptime - Displays the system uptime.
-
-reload-profile - Reloads the current user's PowerShell profile.
-
-unzip <file> - Extracts a zip file to the current directory.
-
-hb <file> - Uploads the specified file's content to a hastebin-like service and returns the URL.
-
-grep <regex> [dir] - Searches for a regex pattern in files within the specified directory or from the pipeline input.
-
-df - Displays information about volumes.
-
-sed <file> <find> <replace> - Replaces text in a file.
-
-which <name> - Shows the path of the command.
-
-export <name> <value> - Sets an environment variable.
-
-pkill <name> - Kills processes by name.
-
-pgrep <name> - Lists processes by name.
-
-head <path> [n] - Displays the first n lines of a file (default 10).
-
-tail <path> [n] - Displays the last n lines of a file (default 10).
-
-nf <name> - Creates a new file with the specified name.
-
-mkcd <dir> - Creates and changes to a new directory.
-
-docs - Changes the current directory to the user's Documents folder.
-
-dtop - Changes the current directory to the user's Desktop folder.
-
-ep - Opens the profile for editing.
-
-k9 <name> - Kills a process by name.
-
-la - Lists all files in the current directory with detailed formatting.
-
-ll - Lists all files, including hidden, in the current directory with detailed formatting.
-
-gits - Shortcut for 'git status'.
-
-gita - Shortcut for 'git add .'.
-
-gitc <message> - Shortcut for 'git commit -m'.
-
-gitp - Shortcut for 'git push'.
-
-g - Changes to the GitHub directory.
-
-gitcom <message> - Adds all changes and commits with the specified message.
-
-lazygit <message> - Adds all changes, commits with the specified message, and pushes to the remote repository.
-
-sysinfo - Displays detailed system information.
-
-flushdns - Clears the DNS cache.
-
-cpy <text> - Copies the specified text to the clipboard.
-
-pst - Retrieves text from the clipboard.
-
-Use 'Show-Help' to display this help message.
-"@
-}
-Write-Host "Use 'Show-Help' to display help"
+Import-Module -Name Microsoft.WinGet.CommandNotFound
+#f45873b3-b655-43a6-b217-97c00aa0db58
