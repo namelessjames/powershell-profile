@@ -4,23 +4,6 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     break
 }
 
-# Function to test internet connectivity
-function Test-InternetConnection {
-    try {
-        $testConnection = Test-Connection -ComputerName github.com -Count 1 -ErrorAction Stop
-        return $true
-    }
-    catch {
-        Write-Warning "Internet connection is required but not available. Please check your connection."
-        return $false
-    }
-}
-
-# Check for internet connectivity before proceeding
-if (-not (Test-InternetConnection)) {
-    break
-}
-
 # Profile creation or update
 if (!(Test-Path -Path $PROFILE -PathType Leaf)) {
     try {
