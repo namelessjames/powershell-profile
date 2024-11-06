@@ -1,7 +1,7 @@
 # Import Modules and External Profiles
 # Ensure Terminal-Icons module is installed before importing
 if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
-    Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -SkipPublisherCheck
+    Install-Module -Name Terminal-Icons -Repository PSGallery -Scope CurrentUser -Force -SkipPublisherCheck
 }
 Import-Module -Name Terminal-Icons
 
@@ -20,28 +20,21 @@ function ff($name) {
     }
 }
 
-# System Utilities
 function admin {
     if ($args.Count -gt 0) {
         $argList = "& '$args'"
         Start-Process wt -Verb runAs -ArgumentList "pwsh.exe -NoExit -Command $argList"
-    } else {
+    }
+    else {
         Start-Process wt -Verb runAs
     }
 }
 
-# Set UNIX-like aliases for the admin command, so sudo <command> will run the command with elevated rights.
 Set-Alias -Name su -Value admin
 
-function uptime {
-    if ($PSVersionTable.PSVersion.Major -eq 5) {
-        Get-WmiObject win32_operatingsystem | Select-Object @{Name='LastBootUpTime'; Expression={$_.ConverttoDateTime($_.lastbootuptime)}} | Format-Table -HideTableHeaders
-    } else {
-        net statistics workstation | Select-String "since" | ForEach-Object { $_.ToString().Replace('Statistics since ', '') }
-    }
-}
+Set-Alias -Name z -Value zoxide
 
-function reload-profile {
+function reloadProfile {
     & $profile
 }
 
@@ -84,13 +77,13 @@ function pgrep($name) {
 }
 
 function head {
-  param($Path, $n = 10)
-  Get-Content $Path -Head $n
+    param($Path, $n = 10)
+    Get-Content $Path -Head $n
 }
 
 function tail {
-  param($Path, $n = 10, [switch]$f = $false)
-  Get-Content $Path -Tail $n -Wait:$f
+    param($Path, $n = 10, [switch]$f = $false)
+    Get-Content $Path -Tail $n -Wait:$f
 }
 
 # Quick File Creation
@@ -99,15 +92,8 @@ function nf { param($name) New-Item -ItemType "file" -Path . -Name $name }
 # Directory Management
 function mkcd { param($dir) mkdir $dir -Force; Set-Location $dir }
 
-### Quality of Life Aliases
-
-# Navigation Shortcuts
-function docs { Set-Location -Path $HOME\Documents }
-
-function dtop { Set-Location -Path $HOME\Desktop }
-
 # Quick Access to Editing the Profile
-function ep { vim $PROFILE }
+function ep { code $PROFILE }
 
 # Simplified Process Management
 function k9 { Stop-Process -Name $args[0] }
@@ -121,43 +107,27 @@ function gs { git status }
 
 function gadd { git add . }
 
-function gitc { param($m) git commit -m "$m" }
+function gico { param($m) git commit -m "$m" }
 
-function gitp { git push }
+function gipu { git push }
 
-function g { zoxide query Github }
+function gipufo { git push --force }
 
-function gitcl { git clone "$args" }
+function ochnee { git rebase master }
 
-function gitcom {
-    git add .
-    git commit -m "$args"
-}
-function lazygit {
-    git add .
-    git commit -m "$args"
-    git push
-}
-
-# Quick Access to System Information
-function sysinfo { Get-ComputerInfo }
+function ochneei { git rebase master -i }
 
 # Networking Utilities
 function flushdns {
-	Clear-DnsClientCache
-	Write-Host "DNS has been flushed"
+    Clear-DnsClientCache
+    Write-Host "DNS has been flushed"
 }
-
-# Clipboard Utilities
-function cpy { Set-Clipboard $args[0] }
-
-function pst { Get-Clipboard }
 
 # Enhanced PowerShell Experience
 Set-PSReadLineOption -Colors @{
-    Command = 'Yellow'
+    Command   = 'Yellow'
     Parameter = 'Green'
-    String = 'DarkCyan'
+    String    = 'DarkCyan'
 }
 
 # Get theme from profile.ps1 or use a default theme
@@ -168,7 +138,8 @@ function Get-Theme {
             Invoke-Expression $existingTheme
             return
         }
-    } else {
+    }
+    else {
         oh-my-posh init pwsh --config https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/amro.omp.json | Invoke-Expression
     }
 }
@@ -176,14 +147,16 @@ function Get-Theme {
 ## Final Line to set prompt
 Get-Theme
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
-    Invoke-Expression (& { (zoxide init --cmd cd powershell | Out-String) })
-} else {
+    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
+else {
     Write-Host "zoxide command not found. Attempting to install via winget..."
     try {
         winget install -e --id ajeetdsouza.zoxide
         Write-Host "zoxide installed successfully. Initializing..."
         Invoke-Expression (& { (zoxide init powershell | Out-String) })
-    } catch {
+    }
+    catch {
         Write-Error "Failed to install zoxide. Error: $_"
     }
 }
