@@ -117,6 +117,9 @@ function ochnee { git rebase master }
 
 function ochneei { git rebase master -i }
 
+function Remove-GoneBranches { git branch --list --format "%(if:equals=[gone])%(upstream:track)%(then)%(refname:short)%(end)" | ? { $_ -ne "" } | % { git branch -D $_ } }
+Set-Alias -Name rgbr -Value Remove-GoneBranches
+
 # Networking Utilities
 function flushdns {
     Clear-DnsClientCache
